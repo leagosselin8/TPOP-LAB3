@@ -1,0 +1,56 @@
+import csv
+import matplotlib.pyplot as plt
+import numpy as np
+from scipy.optimize import curve_fit
+
+x = []
+y = []
+z = []
+
+with open("scope_3.csv", newline='') as csvfile:
+    reader = csv.reader(csvfile)
+    header = next(reader)  # Skip the header row
+    #skip additional header lines if necessary
+    for _ in range(7):
+        next(reader)
+    for row in reader:
+        x.append(float(row[0]))
+        y.append(float(row[1]))
+        z.append(float(row[2]))
+
+
+x = np.array(x)
+y = np.array(y)
+z = np.array(z)
+
+
+seuil = 0.7 * np.max(y)
+plateau_haut = y > seuil
+signal_plateau = y[plateau_haut]
+
+signal_moyen = np.mean(signal_plateau)
+bruit_std = np.std(signal_plateau)
+
+snr = signal_moyen / bruit_std
+snr_db = 20 * np.log10(snr)
+print(f"SNR: {snr_db:.2f} dB")
+
+
+plt.text(
+    0.05, 0.90,
+    f"SNR = {snr_db:.2f} dB",
+    transform=plt.gca().transAxes,
+    fontsize=10,
+    bbox=dict(facecolor='white', alpha=0.8)
+)
+
+z_centre = z + 1.2
+x = x - x.min()
+
+
+plt.plot(x, y, color='red', label='Signal de référence', linestyle='--')
+plt.plot(x, z_centre, color='black', label='Signal bruitée')
+plt.xlabel('Temps [s]')
+plt.ylabel('Tension [V]')
+plt.legend()
+plt.show()
